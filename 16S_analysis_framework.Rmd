@@ -44,7 +44,7 @@ Useful for standardizing how R chunks are handled by knitr. There are quite a fe
 knitr::opts_chunk$set(fig.width=8,
                       fig.height=6,
                       fig.path="./figures/",
-                      dev='pdf',
+                      dev='png',
                       warning=FALSE,
                       message=FALSE)
 ```
@@ -75,8 +75,8 @@ library("randomForest")
 packageVersion("randomForest")
 library("data.table")
 packageVersion("data.table")
-library("HH")
-packageVersion("HH")
+library("corrplot")
+packageVersion("corrplot")
 
 ```
 ##Set global ggplot2 theme and options. This sets the plotting aesthetics for every ggplot2 for the rest of the document.
@@ -420,7 +420,7 @@ any(taxa_sums(ps3.amp) == 0) # It should now be false
 
 # Make a subset of mice treated with Vehicle
 ps3 # Check the original number of samples
-ps3.vehicle <- subset_samples(ps3, Treatment == "Koolaid")
+ps3.vehicle <- subset_samples(ps3, Treatment == "Vehicle")
 ps3.vehicle # Check that the number of svehicleles is correct following the subsetting
 
 any(taxa_sums(ps3.vehicle) == 0) # In this case it is TRUE, so remove the zero's
@@ -483,7 +483,7 @@ ps3.rich$divergence <- divergence(ps3)
 
 ```
 
-```{r alpha-diversity, fig.width=3, fig.height=3, fig.align="center"}
+```{r alpha-diversity}
 p.rich.treatment <- ggboxplot(ps3.rich, x = "Treatment", y = "richness_0", outlier.shape = NA) +
   geom_jitter(width = 0.2) +
   # facet_grid(~Week) +
@@ -587,18 +587,18 @@ Key factors that one may want to consdier when approaching a beta diversity anal
 
 ```{r beta-diversity}
 # Ordinate
-ord.pcoa.uni <- ordinate(ps0, method = "PCoA", distance = "unifrac")
-ord.pcoa.wuni <- ordinate(ps0, method = "PCoA", distance = "wunifrac")
+ord.pcoa.uni <- ordinate(ps3, method = "PCoA", distance = "unifrac")
+ord.pcoa.wuni <- ordinate(ps3, method = "PCoA", distance = "wunifrac")
 
 # Plots
-p.pcoa.uni <- plot_ordination(ps0, ord.pcoa.uni, color = "GroupedCage") +
+p.pcoa.uni <- plot_ordination(ps3, ord.pcoa.uni, color = "GroupedCage") +
   geom_point(size=5, alpha = 0.7) +
   geom_point(colour = "grey50", size = 1.5) +
   facet_grid(~ Treatment) +
   stat_ellipse(type = "norm") +
   ggtitle("PCoA | Unifrac")
 
-p.pcoa.wuni <- plot_ordination(ps0, ord.pcoa.wuni, color = "GroupedCage") +
+p.pcoa.wuni <- plot_ordination(ps3, ord.pcoa.wuni, color = "SurvivalStatus") +
   geom_point(size=5, alpha = 0.7) +
   geom_point(colour = "grey50", size = 1.5) +
   facet_grid(~ Treatment) +
@@ -608,9 +608,9 @@ p.pcoa.wuni <- plot_ordination(ps0, ord.pcoa.wuni, color = "GroupedCage") +
 grid.arrange(p.pcoa.uni, p.pcoa.wuni, nrow = 2)
 
 ```
+For fun the points are color coded by the cage each animal originate from or survival status . The take home message from these plots is that the samples are separated by treatment, and there isnt much of any separation by cage. This is to be expected from the experimental design. The ADONIS test can be used to test if the treatment groups are significantly different.
 
-For fun the points are color coded by the cage each animal originate from. The take home message from these plots is that the samples are separated by treatment, and there isnt much of any separation by cage. This is to be expected from the experimental design. To ADONIS test can be used to test if the treatment groups are significantly different. To perform ADONIS on PhyloSeq objectes you need to 
-
+##Group significance testing with ADONIS
 
 ```{r}
 # Set a random seed so that exact results can be reproduced
@@ -636,7 +636,6 @@ doadonis <- function(physeq, category) {
 # Runs Permanov and Homogeneity of dispersion test
 # See ?betadisper for more info
 doadonis(ps0, "Treatment")
-doadonis(ps0.amp, "SurvivalStatus")
 
 ```
  
