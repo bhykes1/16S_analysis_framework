@@ -524,12 +524,12 @@ sample_data(ps3.amp)$Richness <- diversity.amp$richness_0
 colnames(sample_data(ps3.vehicle))
 colnames(sample_data(ps3.amp))
 
-p.regr.veh <- plot_regression(Shannon ~ Richness, meta(ps3.vehicle), spag = TRUE) +
+p.regr.veh <- plot_regression(Shannon ~ Richness, meta(ps3.vehicle), spag = FALSE, shade = FALSE, show.lm = TRUE) +
   ggtitle("Vehicle Control Mice") +
   ylab("Shannon Diversity") +
   xlab("Richness")
 
-p.regr.amp <- plot_regression(Shannon ~ Richness, meta(ps3.amp), spag = TRUE) +
+p.regr.amp <- plot_regression(Shannon ~ Richness, meta(ps3.amp), spag = FALSE, shade = FALSE, show.lm = TRUE) +
   ggtitle("Ampicillin Treated Mice") +
   ylab("Shannon Diversity") +
   xlab("Richness")
@@ -612,7 +612,7 @@ For fun the points are color coded by the cage each animal originate from or sur
 
 ##Group significance testing with ADONIS
 
-```{r}
+```{r adonis}
 # Set a random seed so that exact results can be reproduced
 set.seed(1000)
 
@@ -769,8 +769,6 @@ p.Actinomycetales.seq <- ggboxplot(ps3_Actinomycetales.seq, x = "Treatment", y =
 p.Actinomycetales.seq
 
 ```
-
-
 
 ```{r session-info}
 # Dsiplay current R session information
