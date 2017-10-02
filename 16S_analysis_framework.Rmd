@@ -25,7 +25,7 @@ The code chunks perform the following functions:
 
 To be added: Proscutes, ANCOVA
 
-The example data are dada2 resolved sequence variants. Briefly, extracted nucleic acid from stool samples collected from individually caged mice were amplified in triplicate using primers specific for the V4 region using primers 515F/806R. One group of mice (n=30) were treated with ampicillin for 3 days, and the other a vehicle control (n=15).
+The example data are dada2 amplicon sequence variants. Briefly, extracted nucleic acid from stool samples collected from individually caged mice were amplified in triplicate using primers specific for the V4 region using primers 515F/806R. One group of mice (n=30) were treated with ampicillin for 3 days, and the other a vehicle control (n=15).
 
 ##Data and environment initiation
 
@@ -135,16 +135,16 @@ sample_data(ps0)$Treatment
 
 Data assessment consists of 2 steps:
 
-1) Evaluate Resolved Sequence Variant (RSV, formerly referred to as an OTU) summary statistics
+1) Evaluate Amplicon Sequence Variant (ASV, formerly referred to as an OTU) summary statistics
 2) Detect and remove outlier samples
 
-Begin by running the following R chunk to produce several summary plots and basic statistics about the RSV's and samples in your data.
+Begin by running the following R chunk to produce several summary plots and basic statistics about the ASV's and samples in your data.
 
 ```{r data-assessment}
-# Create a new data frame of the sorted row sums, a column of sorted values from 1 to the total number of individuals/counts for each RSV and a categorical variable stating these are all RSVs.
+# Create a new data frame of the sorted row sums, a column of sorted values from 1 to the total number of individuals/counts for each ASV and a categorical variable stating these are all ASVs.
 readsumsdf = data.frame(nreads = sort(taxa_sums(ps0), TRUE), 
                         sorted = 1:ntaxa(ps0),
-                        type = "RSVs")
+                        type = "ASVs")
 
 
 # Add a column of sample sums (total number of individuals per sample)
@@ -161,7 +161,7 @@ sample_sum_df <- data.frame(sum = sample_sums(ps0))
 # Generates a second bar plot with # of reads (y-axis) per sample. Sorted from most to least
 p.reads = ggplot(readsumsdf, aes(x = sorted, y = nreads)) +
   geom_bar(stat = "identity") +
-  ggtitle("RSV Assessment") +
+  ggtitle("ASV Assessment") +
   scale_y_log10() +
   facet_wrap(~type, scales = "free") +
   ylab("# of Sequences")
@@ -185,17 +185,17 @@ There is an R script in the /scripts directory called plot_violin which encapsul
 
 The above data assessment is useful for getting an idea of 1) the overall taxonomic distribution of your reads (left plot). This will normally be a "long tail" with some taxa being highly abundant in the data tapering off to taxa with very few reads, 2) probably more valuable than the first plot is how many reads are in each sample (middle plot). Very low read count can be indicative of a failed reaction and 3) a histogram of the number of samples at various "bins" of read depth. Each of these plots will help give an understanding of how your data are structured across taxa and samples and will vary depending on the nature of your samples.
 
-Samples with unexpectedly low number of sequences can be safely removed. This is an intuitive process and should be instructed by your understanding of the samples in your study. For example, if you have 5 samples from stool samples, one would expect to obtain thousands, if not several thousands of RSVs. This may not be the case for other tissues, such as spinal fluid or tissue samples. Similarly, you would not expect thousands of RSV from samples obtained from antibiotic treated organisms. Following antibiotic treatment you may be left with dozens or hundreds of RSVs. So contextual awareness about the biology of your system should guide your decision to remove samples based on RSV number. The basic idea is to remove samples with "unexpected" numbers of RSV.
+Samples with unexpectedly low number of sequences can be safely removed. This is an intuitive process and should be instructed by your understanding of the samples in your study. For example, if you have 5 samples from stool samples, one would expect to obtain thousands, if not several thousands of ASVs. This may not be the case for other tissues, such as spinal fluid or tissue samples. Similarly, you would not expect thousands of ASV from samples obtained from antibiotic treated organisms. Following antibiotic treatment you may be left with dozens or hundreds of ASVs. So contextual awareness about the biology of your system should guide your decision to remove samples based on ASV number. The basic idea is to remove samples with "unexpected" numbers of ASV.
 
 Importantly, at each stage you should document and justify your decisions. If you are concerned that sample removal will alter the interpretation of your results, you should run your analysis on the full data and the data with the sample(s) removed to see how the decision affects your interpretation.
 
-The above plots provide overall summaries about the number of RSVs found in all of your samples. However, they are not very useful for identifying and removing specific samples. This can be done using the following R chunk.
+The above plots provide overall summaries about the number of ASVs found in all of your samples. However, they are not very useful for identifying and removing specific samples. This can be done using the following R chunk.
 
 ```{r sample-removal-identification}
 # Format a data table to combine sample summary data with sample variable data
 ss <- sample_sums(ps0)
 sd <- as.data.frame(sample_data(ps0)) # useful to coerce the phyloseq object into an R data frame
-df <- merge(sd, data.frame("RSVs" = ss), by ="row.names") # merge ss with sd by row names. Rename ss to RSVs in the new data frame
+df <- merge(sd, data.frame("ASVs" = ss), by ="row.names") # merge ss with sd by row names. Rename ss to ASVs in the new data frame
 
 # Plot the data by the treatment variable
 
@@ -203,24 +203,24 @@ y = 50 # Set a threshold for the minimum number of acceptable reads. Can start a
 x = "Treatment" # Set the x-axis variable you want to examine
 label = "Well" # This is the label you want to overlay on the points that are below threshold y. Should be something sample specific
 
-p.ss.boxplot <- ggplot(df, aes_string(x, y = "RSVs", fill = x)) + # x is what you assigned it above
+p.ss.boxplot <- ggplot(df, aes_string(x, y = "ASVs", fill = x)) + # x is what you assigned it above
   geom_boxplot(outlier.colour="NA") +
   scale_y_log10() +
   geom_hline(yintercept = y, lty = 2) + # Draws a dashed line across the threshold you set above as y
   geom_jitter(alpha = 0.5, width = 0.15, size = 2)
-  # geom_text(aes_string(x, y="RSVs", label=label), size=3, nudge_x = 0.1) # This labels a subset that fall below threshold variable y and labels them with the label variable
+  # geom_text(aes_string(x, y="ASVs", label=label), size=3, nudge_x = 0.1) # This labels a subset that fall below threshold variable y and labels them with the label variable
 p.ss.boxplot
 
 ```
 
 (In progress) There is an R script in the /scripts directory called plot_violin which encapsulates that entire R chunk into a single command.
 
-The example data does have a couple of samples with fewer than 500 RSVs. However, these come from samples obtained from antibiotic treated mice, so this fits our expectation. There is also a single sample with fewer than 1,000 RSVs in the control data which is extraordinarliy low compared to the other samples. This sample should definetely be considered for removal. When questionable samples arise you should take note of them so if there are samples which behave oddly in downstream analysis you can recall this information and perhaps justify their removal. The following R chunk shows how to identify and remove samples if needed.
+The example data does have a couple of samples with fewer than 500 ASVs. However, these come from samples obtained from antibiotic treated mice, so this fits our expectation. There is also a single sample with fewer than 1,000 ASVs in the control data which is extraordinarliy low compared to the other samples. This sample should definitely be considered for removal. When questionable samples arise you should take note of them, so if there are samples which behave oddly in downstream analysis you can recall this information and perhaps justify their removal. The following R chunk shows how to identify and remove samples if needed.
 
 ```{r sample-removal}
-# Use the same 'subset' strategy to plot text on only those samples with fewer than y numbers of RSVs to produce a table of samples
-low.RSV.samples <- subset(df, RSVs <= 1000) # Set the number to 1,000 to capture that one sample in vehicle control that is lower than 1,000
-low.RSV.samples
+# Use the same 'subset' strategy to plot text on only those samples with fewer than y numbers of ASVs to produce a table of samples
+low.ASV.samples <- subset(df, ASVs <= 1000) # Set the number to 1,000 to capture that one sample in vehicle control that is lower than 1,000
+low.ASV.samples
 
 # You can use this data to find a unique identifier to remove those specific samples
 ps0 # View the original number of samples
@@ -237,7 +237,7 @@ Note that we created a new phyloseq object called ps1. This preserves all of the
 
 Failure to detect and remove "bad" samples can make interpreting ordinations much more challenging as they typically project as "outliers" severely skewing the rest of the samples. These samples also increase variance and will impede your ability to identify differentially abundant taxa between groups. So sample outlier removal should be a serious and thoughtful part of every analysis in order to obtain optimal results.
 
-The next code chunk implements an MDS plot of Bray-Curtis dissimilarity. This is a simple projection of multivariant data and can be useful for identifying sample outliers similar to what we just did above. However, this takes into consideration the entire properties of the data set, and not just number of RSVs. If outliers are suspected based on this plot one should consider their removal.
+The next code chunk implements an MDS plot of Bray-Curtis dissimilarity. This is a simple projection of multivariate data and can be useful for identifying sample outliers similar to what we just did above. However, this takes into consideration the entire properties of the data set, and not just number of ASVs. If outliers are suspected based on this plot one should consider their removal.
 
 ```{r outlier-sample-evaluation}
 # Outlier evaluation
@@ -252,13 +252,13 @@ p.MDS.outlier
 ```
 ## Outlier sample removal
 
-You can see when we color code the points by treatment that there are three samples that are intermediate between Vehicle and Ampicillin treatment (labelled G1, H1, and H3), and one Ampicillin sample behaving like a Vehicle treated sample (sample F1). The samples were intentionally labelled by the sample well from the 96-well plate that was used in library creation. It is very common for the edge wells (rows A or H and columns 1 and 12) to have a higher failure rate due to evaporation during thermal cycling. Overlaying the well coordinates as text on the ordination plot shows that the  samples exhibiting unexpected behavior were amplified in edge wells, except the H3 sample. Knowing the well position along with the unexpected behavior allows us to make the safe decision that these samples are likely unrepresentative of the experiment and can be justifiably documented and removed.
+You can see when we color code the points by treatment that there are three samples that are intermediate between Vehicle and Ampicillin treatment (labelled G1, H1, and H3), and one Ampicillin sample behaving like a Vehicle treated sample (sample F1). The samples were intentionally labelled by the sample well from the 96-well plate that was used in library creation. It is very common for the edge wells (rows A or H and columns 1 and 12) to have a higher failure rate due to evaporation during thermal cycling. Overlaying the well coordinates as text on the ordination plot shows that the samples exhibiting unexpected behavior were amplified in edge wells, except the H3 sample. Knowing the well position along with the unexpected behavior allows us to make the safe decision that these samples are likely unrepresentative of the experiment and can be justifiably documented and removed.
 
-If you recall the violin plot generated to detect sample outliers above, there were also four samples from the Ampicillin treated samples with unexpectedly high numbers of RSVs. We did not consider those earlier, but this MDS plot suggests that there are samples from Ampicillin treated mice behaving like samples from Vehicle control mice. If you redraw the violin plot but overlay "Well" as the text variable for all samples and not a subset, you will see that samples G1, H1, H3 and in particular the sample in F1 have RSV numbers similar to the Vehicle control mice.
+If you recall the violin plot generated to detect sample outliers above, there were also four samples from the Ampicillin treated samples with unexpectedly high numbers of ASVs. We did not consider those earlier, but this MDS plot suggests that there are samples from Ampicillin treated mice behaving like samples from Vehicle control mice. If you redraw the violin plot but overlay "Well" as the text variable for all samples and not a subset, you will see that samples G1, H1, H3 and in particular the sample in F1 have ASV numbers similar to the Vehicle control mice.
 
 The fact that three of these came from edge wells is a strong argument for their removal. The sample in H3 is a more challenging decision. These samples could just be representative of the natural biological variability in the effectiveness of Ampicillin treatment in mice. Perhaps the antibiotics just didnt work as well in the mouse used in well H3.
 
-Sample removal decisions should be made thoughtufully and considering biological and technical context. Again, the appropirate way to handle this is to document and test the affect of the removal. For this example, I am choosing to remove all of the outlier samples as indicated by the MDS and RSV violin plots (samples in well G1, H1, F1 as well as the curious sample in H3). I am doing so because I want to also exclude variance due to failed Ampicillin treatment which these plots are in support of.
+Sample removal decisions should be made thoughtfully and considering biological and technical context. Again, the appropriate way to handle this is to document and test the affect of the removal. For this example, I am choosing to remove all of the outlier samples as indicated by the MDS and ASV violin plots (samples in well G1, H1, F1 as well as the curious sample in H3). I am doing so because I want to also exclude variance due to failed Ampicillin treatment which these plots are in support of.
 
 ```{r outlier-sample-removal}
 # Note: DO NOT remove based on well number. Each run uses several 96-well plates, so removal by well number will potential remove serveral samples
@@ -285,7 +285,7 @@ p.MDS.outlier.removed
 ```
 ##Taxon prevalence estimations and filtering
 
-Low abundant taxa typically do not contribute to ecological community evaluation or differential abundnace testing. There are of course caveats to this statement (i.e. low-abundance pathogen detction), but many analysis can benefit from the removal of uninformative (low prevelance) taxa. Removal of low prevelance taxa greatly assist in tests penalized with a false-discovery-rate (FDR) calculation. Similar to outlier sample removal, low prevelant taxa removal should be justified and documented. The following R chunk provides several evaluations and plots to assist with this decision.
+Low abundant taxa typically do not contribute to ecological community evaluation or differential abundnace testing. There are of course caveats to this statement (i.e. low-abundance pathogen detection), but many analysis can benefit from the removal of uninformative (low prevalence) taxa. Removal of low prevalence taxa greatly assist in tests penalized with a false-discovery-rate (FDR) calculation. Similar to outlier sample removal, low prevalent taxa removal should be justified and documented. The following R chunk provides several evaluations and plots to assist with this decision.
 
 ```{r prevalence-assessment}
 # Begin by removing sequences that were not classified as Bacteria or were classified as either mitochondria or chlorplast
@@ -301,11 +301,11 @@ ps2 # Confirm that the taxa were removed
 
 # Note the prefix (e.g. k__, f__, c__, etc.) is a GreenGenes convention. If you are using RDP or Silva you can simply remove these prefixes.
 
-# To remove RSVs lacking phyla classification
+# To remove ASVs lacking phyla classification
 #ps2 <- subset_taxa(ps2, !is.na(Phylum) & !Phylum %in% c("","uncharacterized"))
 
-# Prevelance estimation
-# Calculate feature prevelance across the data set
+# prevalence estimation
+# Calculate feature prevalence across the data set
 prevdf <- apply(X = otu_table(ps2),MARGIN = ifelse(taxa_are_rows(ps2), yes = 1, no = 2),FUN = function(x){sum(x > 0)})
 
 # Add taxonomy and total read counts to prevdf
@@ -328,18 +328,18 @@ p.prevdf1
 
 ```
 
-The code below can be reproduced using the script calleed plot_prevalance.R in the scripts folder.
+The code below can be reproduced using the script called plot_prevalance.R in the scripts folder.
 
-This code will produce a table and a plot of all of the Phyla present in your samples along with information about their prevelance (fraction of samples they are present in) and total abundance across all samples. For this data, you can see from the table that the Cyanobacteria and Deferribacteres have both low prevelance and overall abundance. This is reflected in the plot which displays all of the unique taxa within each family. The points are colored by family, so you can see that there is only one type of Cyanobacteria and Deferribacteres, but lots of Firmicutes. There is also a ubiqutous Tenericute in the data along with another more randomly distributed Tenericute.
+This code will produce a table and a plot of all of the Phyla present in your samples along with information about their prevalence (fraction of samples they are present in) and total abundance across all samples. For this data, you can see from the table that the Cyanobacteria and Deferribacteres have both low prevalence and overall abundance. This is reflected in the plot which displays all of the unique taxa within each family. The points are colored by family, so you can see that there is only one type of Cyanobacteria and Deferribacteres, but lots of Firmicutes. There is also a ubiqutous Tenericute in the data along with another more randomly distributed Tenericute.
 
-The plot also shows a dashed line that was subjectively chosen to cross at 5% prevelance. Everything below this line is present in fewer than 5% of all of the samples in the study.
+The plot also shows a dashed line that was subjectively chosen to cross at 5% prevalence. Everything below this line is present in fewer than 5% of all of the samples in the study.
 
-Both the table and the plots can be used to remove low prevelant taxa. This can be done by either choosing to remove specific taxa (e.g. Deferribacteres or Cyanobacteria from the example data), or remove all taxa above or below a given threshold (e.g. below 5% prevelance). If you choose to do this you should justify and document. You should also consider analyzing both data (data with all taxa vs. data with low-prevelant taxa removed) to observe the effects of taxa removal. This will be useful for understanding how low-prevelant taxa removal influences your results. Low-prevalence filtering is a common practice precedding differential abudnace testing. Low prevelant taxa create harsh penalties on statistical tests due to multiple testing penalties and it is common practice to remove them. The R chunk below describes how to perform taxon filtering.
+Both the table and the plots can be used to remove low prevalent taxa. This can be done by either choosing to remove specific taxa (e.g. Deferribacteres or Cyanobacteria from the example data), or remove all taxa above or below a given threshold (e.g. below 5% prevalence). If you choose to do this you should justify and document. You should also consider analyzing both data (data with all taxa vs. data with low-prevalent taxa removed) to observe the effects of taxa removal. This will be useful for understanding how low-prevalent taxa removal influences your results. Low-prevalence filtering is a common practice precedding differential abudnace testing. Low prevalent taxa create harsh penalties on statistical tests due to multiple testing penalties and it is common practice to remove them. The R chunk below describes how to perform taxon filtering.
 
 For the sake of example, we will go ahead and remove the low-prevalence Deferribacteres and Cyanobacteria. There is no biological basis behind this, and it would actually be detrimental if you were interested in the biology of either type of organism. But statistically they are not going to provide much information about community diversity across samples. On the other hand, they probably will not cause any problems either, so would normally be safe to leave them in. We will remove them just as an example. We will also make a new phyloseq object with taxa < 5% prevalence removed called ps3.prev.
 
 
-```{r prevelance-filtering}
+```{r prevalence-filtering}
 # Remove specific taxa
 # Define a variable with taxa to remove
 filterPhyla = c("p__Deferribacteres", "p__Cyanobacteria")
@@ -348,7 +348,7 @@ ps2 # Check the number of taxa prior to removal
 ps3 <- subset_taxa(ps2, !Phylum %in% filterPhyla) 
 ps3 # Confirm the taxa were removed
 
-# Removing taxa that fall below 5% prevelance
+# Removing taxa that fall below 5% prevalence
 # Define the prevalence threshold
 prevalenceThreshold = 0.05 * nsamples(ps3)
 prevalenceThreshold
@@ -362,7 +362,7 @@ ps3.prev # Confirm the taxa were removed
 ```
 ##Data transformation
 
-Many analysis in community ecology and hypothesis testing benefit from data transformation. Many microbiome data sets do not fit to a normal distribution, but transforming them towards normality may enable more appropriate data for specific statistical tests. The choice of transformation is not straight forward. There is literature on how frequently used transfromations affect certain analysis, but every data set may require different considerations. Therefore, it is recommended that you examine the effects of several transformations on your data and explore how they alter your results and interpretation.
+Many analysis in community ecology and hypothesis testing benefit from data transformation. Many microbiome data sets do not fit to a normal distribution, but transforming them towards normality may enable more appropriate data for specific statistical tests. The choice of transformation is not straight forward. There is literature on how frequently used transformations affect certain analyses, but every data set may require different considerations. Therefore, it is recommended that you examine the effects of several transformations on your data and explore how they alter your results and interpretation.
 
 The R chunk below implements several commonly used transformations in microbiome research and plots their results. Similar to outlier removal and prevalance filtering, your choice should be justified, tested and documented.
 
@@ -378,10 +378,10 @@ ps3.log <- transform_sample_counts(ps3, function(x) log(1 + x))
 
 # View how each function altered count data
 par(mfrow=c(1,4))
-plot(sort(sample_sums(ps3), TRUE), type = "o", main = "Native", ylab = "RSVs", xlab = "Samples")
-plot(sort(sample_sums(ps3.log), TRUE), type = "o", main = "log Transfromed", ylab = "RSVs", xlab = "Samples")
-plot(sort(sample_sums(ps3.ra), TRUE), type = "o", main = "Relative Abundance", ylab = "RSVs", xlab = "Samples")
-plot(sort(sample_sums(ps3.prop), TRUE), type = "o", main = "Proportional Abundance", ylab = "RSVs", xlab = "Samples")
+plot(sort(sample_sums(ps3), TRUE), type = "o", main = "Native", ylab = "ASVs", xlab = "Samples")
+plot(sort(sample_sums(ps3.log), TRUE), type = "o", main = "log Transfromed", ylab = "ASVs", xlab = "Samples")
+plot(sort(sample_sums(ps3.ra), TRUE), type = "o", main = "Relative Abundance", ylab = "ASVs", xlab = "Samples")
+plot(sort(sample_sums(ps3.prop), TRUE), type = "o", main = "Proportional Abundance", ylab = "ASVs", xlab = "Samples")
 par(mfrow=c(1,1))
 
 # Histograms of the non-transformed data vs. the transformed data can address the shift to normality
@@ -401,7 +401,7 @@ grid.arrange(p.nolog, p.log, ncol = 2)
 ```
 ##Subsetting (optional)
 
-You will frequently find that you want to analyze a subset of your total data set. There are typically commands that will allow you to do this for each individual analysis, but similar to variable reordering it can sometime be more convenient to do this towards the beginning of your analysis. This should be done after removal of outlier samples and taxa. If you wish to create transformed versions of each subset you can either subset the transformed data you just generated, or alternatively retransform your subsetted data. The R chunk below is an example subsetting of the example data by treatment.
+You will frequently find that you want to analyze a subset of your total data set. There are typically commands that will allow you to do this for each individual analysis, but similar to variable reordering it can sometimes be more convenient to do this towards the beginning of your analysis. This should be done after removal of outlier samples and taxa. If you wish to create transformed versions of each subset you can either subset the transformed data you just generated, or alternatively retransform your subsetted data. The R chunk below is an example subsetting of the example data by treatment.
 
 Subsetting away samples can create a situation where taxa are present as empty rows. This is because not every sample has every taxa. These can be removed as shown in the R chunk below.
 
@@ -431,7 +431,7 @@ any(taxa_sums(ps3.vehicle) == 0) # It should now be false
 ```
 ##Community composition plotting
 
-Bar plots can be useful for examining overall taxon representation across your samples. Importantly, they do not portray any information about the overall abundance of each taxa (just relative abundance) and should not be usef for making anything more than high-level visual representations of the community composition of your data.
+Bar plots can be useful for examining overall taxon representation across your samples. Importantly, they do not portray any information about the overall abundance of each taxa (just relative abundance) and should not be used for making anything more than high-level visual representations of the community composition of your data.
 
 ```{r community-composition-plots}
 # Create a data table for ggploting
@@ -462,7 +462,7 @@ These plots show that Ampicillin treatment changes the ratio of Bacteroidetes to
 
 ##Alpha diversity analysis
 
-Alpha diversity is diversity of species on a local scale such as a specific environmental sampling site or patient sample. Species diversity consists of two componentsL species richness and species evenness. Species richness is simply the count of species at a site while species evenness takes into account there abundances. Equal abundances indicates high evenness and low diversity, unequal abundnaces indicates low evenness and high diversity.
+Alpha diversity is diversity of species on a local scale such as a specific environmental sampling site or patient sample. Species diversity consists of two components: species richness and species evenness. Species richness is simply the count of species at a site while species evenness takes into account there abundances. Equal abundances indicates high evenness and low diversity, unequal abundnaces indicates low evenness and high diversity.
 
 The basic properties can be useful for determining high-level differences between study groups. Importantly, they do not take into account any taxonomic information, so any differences you see require further investigations into what taxa are driving differences in alpha diversity.
 
@@ -608,7 +608,7 @@ p.pcoa.wuni <- plot_ordination(ps3, ord.pcoa.wuni, color = "SurvivalStatus") +
 grid.arrange(p.pcoa.uni, p.pcoa.wuni, nrow = 2)
 
 ```
-For fun the points are color coded by the cage each animal originate from or survival status . The take home message from these plots is that the samples are separated by treatment, and there isnt much of any separation by cage. This is to be expected from the experimental design. The ADONIS test can be used to test if the treatment groups are significantly different.
+For fun the points are color coded by the cage each animal originate from or survival status. The take home message from these plots is that the samples are separated by treatment, and there isn't much of any separation by cage. This is to be expected from the experimental design. The ADONIS test can be used to test if the treatment groups are significantly different.
 
 ##Group significance testing with ADONIS
 
@@ -678,7 +678,7 @@ mcols(res.dds, use.names = TRUE)
 ```
 ##Volcano plot of differential abundance testing results
 
-Volcano plots are useful for visualizing not only the differentially abundnat taxa, but those taxa which did not pass the alpha threshold. Interactive plots using plotly can aid in interrogating the complex arrangements of points.
+Volcano plots are useful for visualizing not only the differentially abundant taxa, but also those taxa which did not pass the alpha threshold. Interactive plots using plotly can aid in interrogating the complex arrangements of points.
 
 ```{r volcano-plots-da-results}
 # Prepare to join results data.table and taxonomy table
